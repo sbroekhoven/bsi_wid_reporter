@@ -1,5 +1,7 @@
 # bafin-wid-reporter
 
+> **Note:** I built this project as an example project for a Python training I took.
+
 Monitor for the BSI CERT-Bund WID security advisory feed. It runs in one of three modes:
 
 | Mode | What it does |
