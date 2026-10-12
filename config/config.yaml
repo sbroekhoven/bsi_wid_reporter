@@ -10,7 +10,7 @@ risk_levels: [KRITISCH, HOCH]
 lookback_hours: 24
 
 # Show WIDs with a match list hit even if their risk level is not in risk_levels
-match_overrides_risk_filter: true
+match_overrides_risk_filter: false
 
 # Fields searched by the match list. Allowed: title, description, productdescription, product_names
 match_fields: [title, description, productdescription, product_names]
