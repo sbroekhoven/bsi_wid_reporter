@@ -113,3 +113,9 @@ def test_matches_only_without_matches_skips_post(monkeypatch):
     monkeypatch.setenv("TEAMS_WEBHOOK_URL", "https://example.invalid/hook")
     monkeypatch.setattr(teams.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(AssertionError("posted")))
     assert not post_to_teams(SUMMARY, [make_wid()], TeamsSettings(send_mode="matches_only"), "r.html")
+
+
+def test_new_status_is_highlighted():
+    html = render_report(SUMMARY, [make_wid("WID-A", status="new"), make_wid("WID-B", status="updated")])
+    assert '<dd><span class="status-new">New</span></dd>' in html
+    assert "<dd>Updated</dd>" in html

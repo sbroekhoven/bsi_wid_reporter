@@ -21,12 +21,14 @@ STYLESHEET = """
   --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #5b6475; --border: #dde1e8;
   --kritisch: #b42318; --hoch: #c4500a; --mittel: #a87900; --niedrig: #3b6e3b;
   --match-bg: #fff4c2; --match-text: #5c4300; --error-bg: #fdecea;
+  --new-bg: #dcecff; --new-text: #0b4a8f;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #14171c; --card: #1d2128; --text: #e4e7ec; --muted: #9aa3b2; --border: #313744;
     --kritisch: #f97066; --hoch: #fb9a4b; --mittel: #f5c542; --niedrig: #8bc48b;
     --match-bg: #4a3d0a; --match-text: #ffe58a; --error-bg: #4a1d1a;
+    --new-bg: #13345a; --new-text: #9fcbff;
   }
 }
 * { box-sizing: border-box; }
@@ -76,6 +78,10 @@ code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .match {
   display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.85rem;
   background: var(--match-bg); color: var(--match-text); font-weight: 600;
+}
+.status-new {
+  display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.85rem;
+  background: var(--new-bg); color: var(--new-text); font-weight: 600;
 }
 dl { display: grid; grid-template-columns: 11rem 1fr; gap: 4px 16px; margin: 0; }
 dt { color: var(--muted); }
@@ -146,6 +152,12 @@ def render_stats(wids: list[Wid]) -> str:
     return f'<div class="stats">\n{items}\n</div>'
 
 
+def render_value(label: str, value: str) -> str:
+    if label == "Status" and value == STATUS_LABELS["new"]:
+        return f'<span class="status-new">{escape(value)}</span>'
+    return escape(value)
+
+
 def render_entry(wid: Wid) -> str:
     tags = match_tag_text(wid)
     risk_class = risk_css_class(wid.risk)
@@ -165,7 +177,8 @@ def render_entry(wid: Wid) -> str:
         ("WID advisory list", yes_no(wid.wid_advisory_liste)),
         ("Match tags", wid.match_tags_text or "-"),
     ]
-    body = "\n".join(f"  <dt>{escape(label)}</dt><dd>{escape(value)}</dd>" for label, value in rows)
+    body = "\n".join(f"  <dt>{escape(label)}</dt><dd>{render_value(label, value)}</dd>"
+                     for label, value in rows)
     return f'<article class="wid {risk_class}">\n<h3>{heading}</h3>\n<dl>\n{body}\n</dl>\n</article>'
 
 
