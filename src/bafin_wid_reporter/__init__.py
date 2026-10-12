@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from bafin-wid-reporter!")
+"""BSI CERT-Bund WID daily monitor."""

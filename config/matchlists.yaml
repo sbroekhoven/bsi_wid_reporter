@@ -1,0 +1,12 @@
+# Named keyword groups. Matching is a case-insensitive substring match.
+match_lists:
+  virtualization:
+    - vmware
+    - esxi
+    - vcenter
+  citrix_netscaler:
+    - netscaler
+    - citrix
+  java_frameworks:
+    - springboot
+    - spring boot

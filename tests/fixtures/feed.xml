@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>BSI Warn- und Informationsdienst (WID): Schwachstellen-Informationen (Security Advisories)</title>
+    <link>https://wid.cert-bund.de/portal/wid/securityadvisory</link>
+    <description>Test feed</description>
+    <pubDate>Mon, 12 Oct 2026 18:33:53 GMT</pubDate>
+    <item>
+      <title>[UPDATE] [hoch] CPython: Schwachstelle ermöglicht Denial of Service</title>
+      <link>https://wid.cert-bund.de/portal/wid/securityadvisory?name=WID-SEC-2026-2272</link>
+      <description>Ein entfernter, anonymer Angreifer kann eine Schwachstelle in CPython ausnutzen.</description>
+      <category>hoch</category>
+      <pubDate>Mon, 12 Oct 2026 11:54:13 GMT</pubDate>
+    </item>
+    <item>
+      <title>[NEU] [kritisch] VMware ESXi: Mehrere Schwachstellen</title>
+      <link>https://wid.cert-bund.de/portal/wid/securityadvisory?name=WID-SEC-2026-3872</link>
+      <description>Ein Angreifer kann mehrere Schwachstellen in VMware ESXi ausnutzen.</description>
+      <category>kritisch</category>
+      <pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>[UPDATE] [mittel] Old advisory</title>
+      <link>https://wid.cert-bund.de/portal/wid/securityadvisory?name=WID-SEC-2026-0001</link>
+      <description>Outside the window.</description>
+      <category>mittel</category>
+      <pubDate>Fri, 09 Oct 2026 11:34:22 GMT</pubDate>
+    </item>
+    <item>
+      <title>Item without WID link</title>
+      <link>https://example.org/other</link>
+      <pubDate>Mon, 12 Oct 2026 10:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

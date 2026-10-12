@@ -1,0 +1,97 @@
+{
+  "uuid": "452b13e5-a344-482e-971a-f9faf5718a7b",
+  "name": "WID-SEC-2026-2272",
+  "type": "securityadvisory",
+  "children": [
+    {
+      "name": "productReferenceListe",
+      "type": "productReferenceListe",
+      "children": [
+        {
+          "name": "productReference",
+          "type": "productReference",
+          "properties": {
+            "date": "2026-09-14T22:00:00.000+00:00",
+            "name": "IBM AIX 7.3",
+            "cpeversion": "7.3",
+            "id": "1139691",
+            "productversion": "7.3",
+            "cpeproduct": "cpe:/o:ibm:aix"
+          }
+        },
+        {
+          "name": "productReference",
+          "type": "productReference",
+          "properties": {
+            "date": "2026-09-14T22:00:00.000+00:00",
+            "name": "IBM VIOS 4.1",
+            "cpeversion": "4.1",
+            "id": "1522854",
+            "productversion": "4.1",
+            "cpeproduct": "cpe:/a:ibm:vios"
+          }
+        },
+        {
+          "name": "productReference",
+          "type": "productReference",
+          "properties": {
+            "date": "2026-09-28T22:00:00.000+00:00",
+            "name": "Google Container-Optimized OS",
+            "cpeversion": "-",
+            "id": "1607324",
+            "cpeproduct": "cpe:/o:google:container-optimized_os"
+          }
+        }
+      ],
+      "properties": {}
+    },
+    {
+      "name": "revisionsListe",
+      "type": "revisionsListe",
+      "children": []
+    },
+    {
+      "name": "cveListe",
+      "type": "cveListe",
+      "children": []
+    },
+    {
+      "name": "cveIdListe",
+      "type": "cveIdListe",
+      "children": [
+        {
+          "name": "cveId",
+          "type": "cveId",
+          "properties": {
+            "cveId": "CVE-2026-15308"
+          }
+        }
+      ],
+      "properties": {}
+    },
+    {
+      "name": "scoreListe",
+      "type": "scoreListe",
+      "children": []
+    },
+    {
+      "name": "documentReferenceListe",
+      "type": "documentReferenceListe",
+      "children": []
+    }
+  ],
+  "properties": {
+    "damage": 3,
+    "importStatus": "update",
+    "productdescription": "Python ist eine universelle, üblicherweise interpretierte, höhere Programmiersprache.",
+    "latestrevision": 41,
+    "description": "Ein entfernter, anonymer Angreifer kann eine Schwachstelle in CPython ausnutzen, um einen Denial of Service Angriff durchzuführen.",
+    "idKuerzel": "WID-SEC-2026-2272",
+    "title": "CPython: Schwachstelle ermöglicht Denial of Service",
+    "remotelyExploitable": true,
+    "risiko": "hoch",
+    "widAdvisoryListe": false,
+    "documenttitle": "CPython: Schwachstelle ermöglicht Denial of Service",
+    "currentreleasedate": "2026-10-11T22:00:00.000+00:00"
+  }
+}

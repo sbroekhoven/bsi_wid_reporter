@@ -1,0 +1,38 @@
+# BSI CERT-Bund WID RSS feed
+feed_url: https://wid.cert-bund.de/content/public/securityAdvisory/rss
+# Base URL for the UUID lookup and full content endpoints
+api_base_url: https://wid.cert-bund.de/content/public
+
+# Risk levels to report (case-insensitive). BSI uses: kritisch, hoch, mittel, niedrig
+risk_levels: [KRITISCH, HOCH]
+
+# Only RSS items published within this many hours are processed
+lookback_hours: 24
+
+# Show WIDs with a match list hit even if their risk level is not in risk_levels
+match_overrides_risk_filter: true
+
+# Fields searched by the match list. Allowed: title, description, productdescription, product_names
+match_fields: [title, description, productdescription, product_names]
+
+# Relative paths are resolved against the project root (parent of this config folder)
+paths:
+  db: data/wids.duckdb
+  output: output
+
+retention:
+  db_days: 365      # --cleanup removes WIDs not seen in the feed for this many days
+  report_days: 90   # --cleanup-reports removes HTML reports older than this
+
+http:
+  timeout_seconds: 20
+  request_delay_seconds: 0.5
+  max_retries: 3
+  user_agent: "Mozilla/5.0 (compatible; bafin-wid-reporter/0.1; daily CERT-Bund WID monitor)"
+
+teams:
+  enabled: false
+  webhook_url_env: TEAMS_WEBHOOK_URL
+  send_mode: all        # all | matches_only
+  max_items: 25
+  report_link: ""       # optional base URL where the HTML reports are hosted

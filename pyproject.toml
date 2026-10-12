@@ -1,17 +1,31 @@
 [project]
 name = "bafin-wid-reporter"
 version = "0.1.0"
-description = "Add your description here"
+description = "Daily monitor for the BSI CERT-Bund WID security advisory feed"
 readme = "README.md"
 authors = [
     { name = "Sebastian Broekhoven", email = "2205121+sbroekhoven@users.noreply.github.com" }
 ]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "duckdb>=1.5.6",
+    "feedparser>=6.0.14",
+    "httpx>=0.28.1",
+    "python-dotenv>=1.2.4",
+    "pyyaml>=6.0.3",
+]
 
 [project.scripts]
-bafin-wid-reporter = "bafin_wid_reporter:main"
+bafin-wid-reporter = "bafin_wid_reporter.app:main"
 
 [build-system]
 requires = ["uv_build>=0.12.24,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
