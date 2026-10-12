@@ -10,3 +10,14 @@ match_lists:
   java_frameworks:
     - springboot
     - spring boot
+    - quarkus
+  database:
+    - mysql
+    - postgresql
+    - mongodb
+    - redis
+    - mariadb
+  devops_tools:
+    - jenkins
+    - gitlab
+
