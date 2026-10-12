@@ -109,3 +109,60 @@ def test_feed_failure_writes_report_and_notifies_teams(project, monkeypatch):
     assert len(posted) == 1
     assert "run failed" in json.dumps(posted[0])
     assert not (project / "data").exists()
+
+
+def enable_teams(project, monkeypatch) -> list:
+    config_file = project / "config" / "config.yaml"
+    config_file.write_text(config_file.read_text().replace("enabled: false", "enabled: true"))
+    monkeypatch.setenv("TEAMS_WEBHOOK_URL", "https://example.invalid/hook")
+    posted = []
+    monkeypatch.setattr(teams.httpx, "post", lambda url, json, timeout: posted.append(json) or
+                        httpx.Response(200, request=httpx.Request("POST", url)))
+    return posted
+
+
+def test_sync_then_report_from_db(project, monkeypatch):
+    posted = enable_teams(project, monkeypatch)
+    assert run(project, "--sync") == 0
+    assert (project / "data" / "wids.duckdb").exists()
+    assert not (project / "output").exists()
+    assert posted == []
+
+    # A repeated report shows the same WIDs: the window decides, not earlier reports
+    for _ in range(2):
+        assert run(project, "--report") == 0
+        report = latest_report(project)
+        assert "WID-SEC-2026-2272" in report
+        assert "WIDs new or changed in the database in window: 1" in report
+        assert "Failed to fetch" not in report
+    assert len(posted) == 2
+
+    monkeypatch.setattr(FrozenDatetime, "now", classmethod(
+        lambda cls, tz=None: datetime(2026, 10, 12, 17, 0, tzinfo=timezone.utc).astimezone(tz)))
+    assert run(project, "--report", "--lookback", "1") == 0
+    assert "No advisories qualified" in latest_report(project)
+
+
+def test_report_recomputes_match_tags(project):
+    assert run(project, "--sync") == 0
+    matchlists = project / "config" / "matchlists.yaml"
+    matchlists.write_text("match_lists:\n  python_stack:\n    - cpython\n")
+    assert run(project, "--report") == 0
+    assert "[MATCH: python_stack / cpython]" in latest_report(project)
+
+
+def test_sync_dry_run_stores_nothing(project):
+    assert run(project, "--sync", "--dry-run") == 0
+    assert not (project / "data").exists()
+    assert not (project / "output").exists()
+
+
+def test_report_without_db_is_empty(project):
+    assert run(project, "--report") == 0
+    assert "No advisories qualified" in latest_report(project)
+    assert not (project / "data").exists()
+
+
+def test_sync_and_report_are_exclusive(project):
+    with pytest.raises(SystemExit):
+        run(project, "--sync", "--report")

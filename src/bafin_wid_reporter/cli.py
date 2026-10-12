@@ -7,7 +7,20 @@ from pathlib import Path
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="bafin-wid-reporter",
-        description="Daily monitor for the BSI CERT-Bund WID security advisory feed.",
+        description="Monitor for the BSI CERT-Bund WID security advisory feed. Without --sync or "
+        "--report, a run syncs and then reports the WIDs not reported before.",
+    )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--sync",
+        action="store_true",
+        help="Fetch the lookback window from the feed into the DB only. No report; "
+        "Teams is notified only if the feed cannot be loaded.",
+    )
+    mode.add_argument(
+        "--report",
+        action="store_true",
+        help="Report WIDs new or changed in the DB within the lookback window. No feed fetch.",
     )
     parser.add_argument(
         "--dry-run",

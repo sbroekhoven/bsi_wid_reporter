@@ -100,6 +100,7 @@ class RunSummary:
     failed: int
     filtered_out: int
     dry_run: bool = False
+    from_db: bool = False  # --report: built from the database, not from a feed fetch
 
 
 def sort_key(wid: Wid) -> tuple:
@@ -178,14 +179,21 @@ def render_section(title: str, wids: list[Wid]) -> str:
 def render_summary(summary: RunSummary, wids: list[Wid]) -> str:
     c = counts(wids)
     fmt = "%Y-%m-%d %H:%M %Z"
-    items = [
-        f"Window: {summary.window_start.strftime(fmt)} to {summary.window_end.strftime(fmt)}",
-        f"RSS items in window: {summary.in_window}",
-        f"Reported: {c['total']} (new: {c['new']}, updated: {c['updated']}, match hits: {c['matches']})",
-        f"Below risk threshold: {summary.filtered_out}",
-        f"Already reported in an earlier run: {summary.already_seen}",
-        f"Failed to fetch: {summary.failed}",
-    ]
+    window = f"Window: {summary.window_start.strftime(fmt)} to {summary.window_end.strftime(fmt)}"
+    reported = f"Reported: {c['total']} (new: {c['new']}, updated: {c['updated']}, match hits: {c['matches']})"
+    below = f"Below risk threshold: {summary.filtered_out}"
+    if summary.from_db:
+        items = [window, f"WIDs new or changed in the database in window: {summary.in_window}",
+                 reported, below]
+    else:
+        items = [
+            window,
+            f"RSS items in window: {summary.in_window}",
+            reported,
+            below,
+            f"Already reported in an earlier run: {summary.already_seen}",
+            f"Failed to fetch: {summary.failed}",
+        ]
     if summary.dry_run:
         items.append("Dry run: database not updated, Teams not notified")
     return '<ul class="summary">\n' + "\n".join(f"  <li>{escape(i)}</li>" for i in items) + "\n</ul>"

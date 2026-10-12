@@ -1,4 +1,4 @@
-"""Orchestrates one run: fetch, process, store, report, notify."""
+"""Orchestrates a run: sync (fetch, store), report (filter, write, notify), or both."""
 
 import logging
 from dataclasses import dataclass, field
@@ -85,6 +85,61 @@ def report_feed_failure(config: Config, args, error: str, generated_at: datetime
     return 1
 
 
+def sync_window(config: Config, now: datetime, lookback: float, dry_run: bool) -> tuple[int, FetchResult]:
+    """Fetch the feed window and store every fetched WID. Raises FetchError/ValueError if the feed fails.
+
+    Fetching uses a read-only connection so the write lock is only held for the final save,
+    which keeps a concurrent --report from waiting on the HTTP requests.
+    """
+    with PoliteClient(config.http) as client:
+        feed_items = fetch_feed(client, config.feed_url)
+        window_items = filter_window(feed_items, now, lookback)
+        log.info("%d WIDs published in the last %g hours", len(window_items), lookback)
+        con = storage.connect(config.db_path, read_only=True)
+        try:
+            result = fetch_and_classify(client, con, config, window_items)
+        finally:
+            con.close()
+    if not dry_run:
+        con = storage.connect(config.db_path)
+        storage.save_wids(con, result.fetched, now)
+        con.close()
+    return len(window_items), result
+
+
+def report_and_notify(config: Config, args, summary: RunSummary, reported: list[Wid]) -> int:
+    path = write_report(config.output_dir, summary, reported)
+    if teams_wanted(config, args):
+        post_to_teams(summary, reported, config.teams, path.name,
+                      timeout=config.http.timeout_seconds)
+    return 0
+
+
+def run_report_from_db(config: Config, args, generated_at: datetime, window_start: datetime) -> int:
+    """Report from the DB only. Match tags are recomputed so match list edits apply to stored WIDs."""
+    con = storage.connect(config.db_path, read_only=True)
+    wids = storage.load_changed_since(con, window_start)
+    con.close()
+    for wid in wids:
+        wid.match_tags = find_matches(wid, config.match_lists, config.match_fields)
+    reported = [w for w in wids
+                if passes_filter(w, config.risk_levels, config.match_overrides_risk_filter)]
+    log.info("%d WIDs new or changed in the database since %s, %d reported",
+             len(wids), window_start.isoformat(timespec="minutes"), len(reported))
+    summary = RunSummary(
+        generated_at=generated_at,
+        window_start=window_start,
+        window_end=generated_at,
+        in_window=len(wids),
+        already_seen=0,
+        failed=0,
+        filtered_out=len(wids) - len(reported),
+        dry_run=args.dry_run,
+        from_db=True,
+    )
+    return report_and_notify(config, args, summary, reported)
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     setup_logging(args.verbose)
@@ -103,35 +158,29 @@ def main(argv: list[str] | None = None) -> int:
     lookback = args.lookback if args.lookback is not None else config.lookback_hours
     window_start = (now - timedelta(hours=lookback)).astimezone()
 
-    with PoliteClient(config.http) as client:
-        try:
-            feed_items = fetch_feed(client, config.feed_url)
-        except (FetchError, ValueError) as exc:
-            return report_feed_failure(config, args, str(exc), generated_at, window_start)
-        window_items = filter_window(feed_items, now, lookback)
-        log.info("%d WIDs published in the last %g hours", len(window_items), lookback)
-        con = storage.connect(config.db_path, read_only=args.dry_run)
-        result = fetch_and_classify(client, con, config, window_items)
+    if args.report:
+        return run_report_from_db(config, args, generated_at, window_start)
+
+    try:
+        in_window, result = sync_window(config, now, lookback, args.dry_run)
+    except (FetchError, ValueError) as exc:
+        return report_feed_failure(config, args, str(exc), generated_at, window_start)
+
+    if args.sync:
+        log.info("Sync done: %d fetched (%d new or changed), %d failed%s", len(result.fetched),
+                 len(result.fresh), result.failed, " (dry run, nothing stored)" if args.dry_run else "")
+        return 0
 
     reported = [w for w in result.fresh
                 if passes_filter(w, config.risk_levels, config.match_overrides_risk_filter)]
-    if not args.dry_run:
-        storage.save_wids(con, result.fetched, now)
-    con.close()
-
     summary = RunSummary(
         generated_at=generated_at,
         window_start=window_start,
         window_end=generated_at,
-        in_window=len(window_items),
+        in_window=in_window,
         already_seen=result.already_seen,
         failed=result.failed,
         filtered_out=len(result.fresh) - len(reported),
         dry_run=args.dry_run,
     )
-    path = write_report(config.output_dir, summary, reported)
-
-    if teams_wanted(config, args):
-        post_to_teams(summary, reported, config.teams, path.name,
-                      timeout=config.http.timeout_seconds)
-    return 0
+    return report_and_notify(config, args, summary, reported)

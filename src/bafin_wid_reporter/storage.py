@@ -1,6 +1,7 @@
 """DuckDB storage: WID history, dedupe of already seen revisions, cleanup."""
 
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -9,6 +10,10 @@ import duckdb
 from .parser import Wid
 
 log = logging.getLogger(__name__)
+
+# Another process (e.g. an hourly --sync) may hold the write lock for a moment
+LOCK_RETRIES = 10
+LOCK_RETRY_SECONDS = 3
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS wids (
@@ -60,15 +65,34 @@ ON CONFLICT (id_kuerzel) DO UPDATE SET
 """
 
 
+LOAD_COLUMNS = """
+    id_kuerzel, uuid, title, risiko, remotely_exploitable, description, productdescription,
+    import_status, damage, wid_advisory_liste, cve_ids, product_names, latest_revision,
+    current_release_date, rss_status
+"""
+
+
+def open_with_retry(db_path: Path, read_only: bool) -> duckdb.DuckDBPyConnection:
+    for attempt in range(1, LOCK_RETRIES + 1):
+        try:
+            return duckdb.connect(str(db_path), read_only=read_only)
+        except duckdb.IOException as exc:
+            if "lock" not in str(exc).lower() or attempt == LOCK_RETRIES:
+                raise
+            log.info("Database is locked by another process, retrying in %ds", LOCK_RETRY_SECONDS)
+            time.sleep(LOCK_RETRY_SECONDS)
+    raise AssertionError("unreachable")
+
+
 def connect(db_path: Path, read_only: bool = False) -> duckdb.DuckDBPyConnection:
-    """Open the DB. Read-only on a missing file gives an empty in-memory DB (dry runs)."""
+    """Open the DB. Read-only on a missing file gives an empty in-memory DB."""
     if read_only and not db_path.exists():
         con = duckdb.connect(":memory:")
     elif read_only:
-        return duckdb.connect(str(db_path), read_only=True)
+        return open_with_retry(db_path, read_only=True)
     else:
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        con = duckdb.connect(str(db_path))
+        con = open_with_retry(db_path, read_only=False)
     con.execute(SCHEMA)
     return con
 
@@ -105,6 +129,30 @@ def save_wids(con: duckdb.DuckDBPyConnection, wids: list[Wid], now: datetime) ->
         upsert_wid(con, wid, now)
     con.execute("COMMIT")
     log.info("Stored %d WIDs in the database", len(wids))
+
+
+def row_to_wid(row: tuple) -> Wid:
+    (wid_id, uuid, title, risk, remotely_exploitable, description, productdescription,
+     import_status, damage, wid_advisory_liste, cve_ids, product_names, latest_revision,
+     current_release_date, rss_status) = row
+    return Wid(
+        wid_id=wid_id, uuid=uuid or "", title=title or "", risk=risk or "",
+        remotely_exploitable=remotely_exploitable, description=description or "",
+        productdescription=productdescription or "", import_status=import_status or "",
+        damage=damage or "", wid_advisory_liste=wid_advisory_liste, cve_ids=cve_ids or "",
+        product_names=product_names.split(", ") if product_names else [],
+        latest_revision=latest_revision or "", current_release_date=current_release_date or "",
+        status=rss_status or "unknown",
+    )
+
+
+def load_changed_since(con: duckdb.DuckDBPyConnection, since: datetime) -> list[Wid]:
+    """WIDs first stored or given a new revision at or after `since`. Match tags are not loaded."""
+    rows = con.execute(
+        f"SELECT {LOAD_COLUMNS} FROM wids WHERE last_changed_at >= ? ORDER BY id_kuerzel",
+        [to_db_time(since)],
+    ).fetchall()
+    return [row_to_wid(row) for row in rows]
 
 
 def cleanup_db(con: duckdb.DuckDBPyConnection, older_than_days: int, now: datetime) -> int:
