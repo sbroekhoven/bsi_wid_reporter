@@ -8,7 +8,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from bafin_wid_reporter import api_client, app, teams
+from bsi_wid_reporter import api_client, app, teams
 
 from conftest import FIXTURES
 

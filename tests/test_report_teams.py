@@ -1,11 +1,11 @@
 import json
 from datetime import date, datetime, timezone
 
-from bafin_wid_reporter.config_loader import TeamsSettings
-from bafin_wid_reporter import teams
-from bafin_wid_reporter.report import (RunSummary, cleanup_reports, render_report, write_failure_report,
+from bsi_wid_reporter.config_loader import TeamsSettings
+from bsi_wid_reporter import teams
+from bsi_wid_reporter.report import (RunSummary, cleanup_reports, render_report, write_failure_report,
                                        write_report)
-from bafin_wid_reporter.teams import (MAX_PAYLOAD_BYTES, build_failure_payload, build_payload,
+from bsi_wid_reporter.teams import (MAX_PAYLOAD_BYTES, build_failure_payload, build_payload,
                                       payload_size, post_to_teams)
 
 from conftest import make_wid

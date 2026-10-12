@@ -1,5 +1,5 @@
 [project]
-name = "bafin-wid-reporter"
+name = "bsi-wid-reporter"
 version = "0.1.0"
 description = "Daily monitor for the BSI CERT-Bund WID security advisory feed"
 readme = "README.md"
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-bafin-wid-reporter = "bafin_wid_reporter.app:main"
+bsi-wid-reporter = "bsi_wid_reporter.app:main"
 
 [build-system]
 requires = ["uv_build>=0.12.24,<0.13.0"]

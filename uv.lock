@@ -16,7 +16,7 @@ wheels = [
 ]
 
 [[package]]
-name = "bafin-wid-reporter"
+name = "bsi-wid-reporter"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

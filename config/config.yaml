@@ -28,7 +28,7 @@ http:
   timeout_seconds: 20
   request_delay_seconds: 0.5
   max_retries: 3
-  user_agent: "Mozilla/5.0 (compatible; bafin-wid-reporter/0.1; daily CERT-Bund WID monitor)"
+  user_agent: "Mozilla/5.0 (compatible; bsi-wid-reporter/0.1; daily CERT-Bund WID monitor)"
 
 teams:
   enabled: false

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from bafin_wid_reporter.parser import Wid
+from bsi_wid_reporter.parser import Wid
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from bafin_wid_reporter.rss import extract_status, extract_wid_id, filter_window, parse_feed
+from bsi_wid_reporter.rss import extract_status, extract_wid_id, filter_window, parse_feed
 
 NOW = datetime(2026, 10, 12, 18, 0, tzinfo=timezone.utc)
 

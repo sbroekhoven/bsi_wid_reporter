@@ -21,7 +21,7 @@ class HttpSettings:
     timeout_seconds: float = 20.0
     request_delay_seconds: float = 0.5
     max_retries: int = 3
-    user_agent: str = "Mozilla/5.0 (compatible; bafin-wid-reporter/0.1; daily CERT-Bund WID monitor)"
+    user_agent: str = "Mozilla/5.0 (compatible; bsi-wid-reporter/0.1; daily CERT-Bund WID monitor)"
 
 
 @dataclass

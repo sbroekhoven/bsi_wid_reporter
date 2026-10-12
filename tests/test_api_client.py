@@ -1,9 +1,9 @@
 import httpx
 import pytest
 
-from bafin_wid_reporter import api_client
-from bafin_wid_reporter.api_client import FetchError, PoliteClient, lookup_uuid
-from bafin_wid_reporter.config_loader import HttpSettings
+from bsi_wid_reporter import api_client
+from bsi_wid_reporter.api_client import FetchError, PoliteClient, lookup_uuid
+from bsi_wid_reporter.config_loader import HttpSettings
 
 SETTINGS = HttpSettings(request_delay_seconds=0, max_retries=2)
 
@@ -44,4 +44,4 @@ def test_sends_user_agent():
 
     PoliteClient(SETTINGS, transport=httpx.MockTransport(handler)).get("https://x/y")
     assert seen["ua"].startswith("Mozilla/5.0 ")
-    assert "bafin-wid-reporter/" in seen["ua"]
+    assert "bsi-wid-reporter/" in seen["ua"]

@@ -1,5 +1,5 @@
-from bafin_wid_reporter.matcher import find_matches, passes_filter
-from bafin_wid_reporter.parser import parse_record
+from bsi_wid_reporter.matcher import find_matches, passes_filter
+from bsi_wid_reporter.parser import parse_record
 
 from conftest import make_wid
 

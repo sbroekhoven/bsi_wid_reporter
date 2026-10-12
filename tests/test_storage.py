@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from bafin_wid_reporter import storage
+from bsi_wid_reporter import storage
 
 from conftest import make_wid
 

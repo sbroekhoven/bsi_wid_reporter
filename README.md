@@ -1,4 +1,4 @@
-# bafin-wid-reporter
+# bsi-wid-reporter
 
 > **Note:** I built this project as an example project for a Python training I took.
 
@@ -71,7 +71,7 @@ Runs once and exits. Example crontab entry for 15:00 Europe/Amsterdam:
 
 ```cron
 CRON_TZ=Europe/Amsterdam
-0 15 * * * cd /path/to/bafin_wid_reporter && uv run run.py >> run.log 2>&1
+0 15 * * * cd /path/to/bsi_wid_reporter && uv run run.py >> run.log 2>&1
 ```
 
 Or sync hourly and report once a day. The sync window overlaps (3 hours) so a single failed
@@ -79,8 +79,8 @@ sync is caught up by the next one; the 24-hour report window matches the report 
 
 ```cron
 CRON_TZ=Europe/Amsterdam
-5 * * * *  cd /path/to/bafin_wid_reporter && uv run run.py --sync --lookback 3 >> run.log 2>&1
-0 15 * * * cd /path/to/bafin_wid_reporter && uv run run.py --report --lookback 24 >> run.log 2>&1
+5 * * * *  cd /path/to/bsi_wid_reporter && uv run run.py --sync --lookback 3 >> run.log 2>&1
+0 15 * * * cd /path/to/bsi_wid_reporter && uv run run.py --report --lookback 24 >> run.log 2>&1
 ```
 
 ## Tests
