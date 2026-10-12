@@ -16,6 +16,66 @@ STATUS_LABELS = {"new": "New", "updated": "Updated", "unknown": "Unknown"}
 REPORT_NAME_PATTERN = re.compile(r"^report-(\d{4}-\d{2}-\d{2})(-\d{6})?(-dryrun)?(-failed)?\.html$")
 TITLE_TIME_FORMAT = "%Y-%m-%d %H:%M"
 
+STYLESHEET = """
+:root {
+  --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #5b6475; --border: #dde1e8;
+  --kritisch: #b42318; --hoch: #c4500a; --mittel: #a87900; --niedrig: #3b6e3b;
+  --match-bg: #fff4c2; --match-text: #5c4300; --error-bg: #fdecea;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171c; --card: #1d2128; --text: #e4e7ec; --muted: #9aa3b2; --border: #313744;
+    --kritisch: #f97066; --hoch: #fb9a4b; --mittel: #f5c542; --niedrig: #8bc48b;
+    --match-bg: #4a3d0a; --match-text: #ffe58a; --error-bg: #4a1d1a;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto; padding: 24px 16px 48px; max-width: 1000px;
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+}
+h1 { font-size: 1.6rem; margin: 0 0 16px; }
+h2 { font-size: 1.2rem; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+h3 { font-size: 1.05rem; margin: 0 0 10px; }
+code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.summary {
+  list-style: none; margin: 0; padding: 12px 16px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.summary li { padding: 2px 0; }
+.wid {
+  background: var(--card); border: 1px solid var(--border); border-left: 5px solid var(--muted);
+  border-radius: 8px; padding: 14px 18px; margin: 0 0 14px;
+}
+.wid.risk-kritisch { border-left-color: var(--kritisch); }
+.wid.risk-hoch { border-left-color: var(--hoch); }
+.wid.risk-mittel { border-left-color: var(--mittel); }
+.wid.risk-niedrig { border-left-color: var(--niedrig); }
+.badge {
+  display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.8rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+  border: 1px solid currentColor; vertical-align: middle;
+}
+.badge.risk-kritisch { color: var(--kritisch); }
+.badge.risk-hoch { color: var(--hoch); }
+.badge.risk-mittel { color: var(--mittel); }
+.badge.risk-niedrig { color: var(--niedrig); }
+.match {
+  display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.85rem;
+  background: var(--match-bg); color: var(--match-text); font-weight: 600;
+}
+dl { display: grid; grid-template-columns: 11rem 1fr; gap: 4px 16px; margin: 0; }
+dt { color: var(--muted); }
+dd { margin: 0; overflow-wrap: anywhere; }
+.empty { color: var(--muted); font-style: italic; }
+.error { background: var(--error-bg); border-radius: 8px; padding: 12px 16px; }
+@media (max-width: 600px) {
+  dl { grid-template-columns: 1fr; }
+  dt { font-weight: 600; margin-top: 6px; }
+}
+"""
+
 
 @dataclass
 class RunSummary:
@@ -54,7 +114,10 @@ def counts(wids: list[Wid]) -> dict[str, int]:
 
 def render_entry(wid: Wid) -> str:
     tags = match_tag_text(wid)
-    heading = escape(wid.title) + (f" <strong>{escape(tags)}</strong>" if tags else "")
+    risk_class = risk_css_class(wid.risk)
+    heading = (f'<span class="badge {risk_class}">{escape(wid.risk or "unknown")}</span> '
+               + escape(wid.title)
+               + (f' <span class="match">{escape(tags)}</span>' if tags else ""))
     rows = [
         ("WID", wid.wid_id),
         ("Status", STATUS_LABELS.get(wid.status, wid.status)),
@@ -69,13 +132,13 @@ def render_entry(wid: Wid) -> str:
         ("Match tags", wid.match_tags_text or "-"),
     ]
     body = "\n".join(f"  <dt>{escape(label)}</dt><dd>{escape(value)}</dd>" for label, value in rows)
-    return f"<h3>{heading}</h3>\n<dl>\n{body}\n</dl>"
+    return f'<article class="wid {risk_class}">\n<h3>{heading}</h3>\n<dl>\n{body}\n</dl>\n</article>'
 
 
 def render_section(title: str, wids: list[Wid]) -> str:
     if not wids:
         return ""
-    entries = "\n<hr>\n".join(render_entry(w) for w in sorted(wids, key=sort_key))
+    entries = "\n".join(render_entry(w) for w in sorted(wids, key=sort_key))
     return f"<h2>{escape(title)} ({len(wids)})</h2>\n{entries}"
 
 
@@ -92,7 +155,7 @@ def render_summary(summary: RunSummary, wids: list[Wid]) -> str:
     ]
     if summary.dry_run:
         items.append("Dry run: database not updated, Teams not notified")
-    return "<ul>\n" + "\n".join(f"  <li>{escape(i)}</li>" for i in items) + "\n</ul>"
+    return '<ul class="summary">\n' + "\n".join(f"  <li>{escape(i)}</li>" for i in items) + "\n</ul>"
 
 
 def render_report(summary: RunSummary, wids: list[Wid]) -> str:
@@ -105,27 +168,33 @@ def render_report(summary: RunSummary, wids: list[Wid]) -> str:
             render_section("Other advisories", others),
         ) if s)
     else:
-        content = "<p>No advisories qualified for this report.</p>"
-    return (
-        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
-        f"<title>{escape(title)}</title>\n</head>\n<body>\n"
-        f"<h1>{escape(title)}</h1>\n{render_summary(summary, wids)}\n{content}\n"
-        "</body>\n</html>\n"
-    )
+        content = '<p class="empty">No advisories qualified for this report.</p>'
+    return html_page(title, f"{render_summary(summary, wids)}\n{content}")
 
 
 def render_failure_report(generated_at: datetime, error: str, window_start: datetime) -> str:
     title = f"{report_title(generated_at)}: run failed"
     rerun_from = window_start.strftime("%Y-%m-%d %H:%M %Z")
+    body = (
+        f'<div class="error">\n<p>Error: {escape(error)}</p>\n'
+        f"<p>Nothing was processed. Rerun with <code>uv run run.py --lookback HOURS</code>, "
+        f"where HOURS reaches back to at least {escape(rerun_from)}.</p>\n</div>"
+    )
+    return html_page(title, body)
+
+
+def html_page(title: str, body: str) -> str:
     return (
         "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
-        f"<title>{escape(title)}</title>\n</head>\n<body>\n"
-        f"<h1>{escape(title)}</h1>\n"
-        f"<p>Error: {escape(error)}</p>\n"
-        f"<p>Nothing was processed. Rerun with <code>uv run run.py --lookback HOURS</code>, "
-        f"where HOURS reaches back to at least {escape(rerun_from)}.</p>\n"
-        "</body>\n</html>\n"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+        f"<title>{escape(title)}</title>\n<style>{STYLESHEET}</style>\n</head>\n<body>\n"
+        f"<h1>{escape(title)}</h1>\n{body}\n</body>\n</html>\n"
     )
+
+
+def risk_css_class(risk: str) -> str:
+    level = risk.lower()
+    return f"risk-{level}" if level.upper() in RISK_ORDER else "risk-unknown"
 
 
 def report_title(generated_at: datetime) -> str:
