@@ -20,4 +20,20 @@ match_lists:
   devops_tools:
     - jenkins
     - gitlab
-
+  browser:
+    - chrome
+    - firefox
+    - safari
+    - edge
+  operating_systems:
+    - windows
+    - linux
+    - macos
+    - redhat
+    - alma
+    - centos
+    - ubuntu
+  infrastructure:
+    - kubernetes
+    - docker
+    - podman
