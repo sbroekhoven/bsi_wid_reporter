@@ -39,6 +39,18 @@ h1 { font-size: 1.6rem; margin: 0 0 16px; }
 h2 { font-size: 1.2rem; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
 h3 { font-size: 1.05rem; margin: 0 0 10px; }
 code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin: 0 0 14px; }
+.stat {
+  background: var(--card); border: 1px solid var(--border); border-top: 4px solid var(--muted);
+  border-radius: 8px; padding: 10px 12px; text-align: center;
+}
+.stat .num { display: block; font-size: 1.8rem; font-weight: 700; line-height: 1.2; }
+.stat .label { color: var(--muted); font-size: 0.85rem; }
+.stat.risk-kritisch { border-top-color: var(--kritisch); }
+.stat.risk-kritisch .num { color: var(--kritisch); }
+.stat.risk-hoch { border-top-color: var(--hoch); }
+.stat.risk-hoch .num { color: var(--hoch); }
+.stat.match-stat { border-top-color: var(--match-text); background: var(--match-bg); }
 .summary {
   list-style: none; margin: 0; padding: 12px 16px; background: var(--card);
   border: 1px solid var(--border); border-radius: 8px;
@@ -71,6 +83,7 @@ dd { margin: 0; overflow-wrap: anywhere; }
 .empty { color: var(--muted); font-style: italic; }
 .error { background: var(--error-bg); border-radius: 8px; padding: 12px 16px; }
 @media (max-width: 600px) {
+  .stats { grid-template-columns: repeat(3, 1fr); }
   dl { grid-template-columns: 1fr; }
   dt { font-weight: 600; margin-top: 6px; }
 }
@@ -109,7 +122,27 @@ def counts(wids: list[Wid]) -> dict[str, int]:
         "new": sum(1 for w in wids if w.status == "new"),
         "updated": sum(1 for w in wids if w.status == "updated"),
         "matches": sum(1 for w in wids if w.match_tags),
+        "kritisch": sum(1 for w in wids if w.risk.upper() == "KRITISCH"),
+        "hoch": sum(1 for w in wids if w.risk.upper() == "HOCH"),
     }
+
+
+def render_stats(wids: list[Wid]) -> str:
+    c = counts(wids)
+    tiles = [
+        ("Advisories", c["total"], ""),
+        ("New", c["new"], ""),
+        ("Updated", c["updated"], ""),
+        ("Critical", c["kritisch"], "risk-kritisch"),
+        ("High", c["hoch"], "risk-hoch"),
+        ("Match hits", c["matches"], "match-stat"),
+    ]
+    items = "\n".join(
+        f'  <div class="stat {css}"><span class="num">{value}</span>'
+        f'<span class="label">{escape(label)}</span></div>'
+        for label, value, css in tiles
+    )
+    return f'<div class="stats">\n{items}\n</div>'
 
 
 def render_entry(wid: Wid) -> str:
@@ -169,7 +202,7 @@ def render_report(summary: RunSummary, wids: list[Wid]) -> str:
         ) if s)
     else:
         content = '<p class="empty">No advisories qualified for this report.</p>'
-    return html_page(title, f"{render_summary(summary, wids)}\n{content}")
+    return html_page(title, f"{render_stats(wids)}\n{render_summary(summary, wids)}\n{content}")
 
 
 def render_failure_report(generated_at: datetime, error: str, window_start: datetime) -> str:

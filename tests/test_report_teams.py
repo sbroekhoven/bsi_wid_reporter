@@ -35,6 +35,20 @@ def test_report_escapes_and_tags():
     assert "<dd>Yes</dd>" in html
 
 
+def test_report_stats_tiles():
+    wids = [
+        make_wid("WID-A", risk="kritisch", status="new", match_tags=[("g", "k")]),
+        make_wid("WID-B", risk="hoch", status="updated"),
+        make_wid("WID-C", risk="hoch", status="updated"),
+        make_wid("WID-D", risk="mittel", status="new", match_tags=[("g", "k")]),
+    ]
+    html = render_report(SUMMARY, wids)
+    expected = {"Advisories": 4, "New": 2, "Updated": 2, "Critical": 1, "High": 2, "Match hits": 2}
+    for label, value in expected.items():
+        assert f'<span class="num">{value}</span><span class="label">{label}</span>' in html
+    assert html.index('class="stats"') < html.index('class="summary"')
+
+
 def test_empty_report_says_so(tmp_path):
     path = write_report(tmp_path, SUMMARY, [])
     assert path.name == "report-2026-10-12-150005.html"
