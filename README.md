@@ -42,6 +42,18 @@ Run `--sync` often (e.g. hourly) and `--report` when you need a report.
 
 ## Setup
 
+The project uses [uv](https://docs.astral.sh/uv/) to manage Python and dependencies. Install it with:
+
+```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh   # Linux / macOS
+# or: pipx install uv, brew install uv
+```
+
+On Windows: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`.
+uv installs the Python version from `.python-version` on first `uv sync` if it is missing.
+
+Then install the dependencies:
+
 ```sh
 uv sync
 cp .env.example .env   # only needed when teams.enabled is true
